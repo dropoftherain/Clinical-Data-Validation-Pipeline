@@ -10,6 +10,19 @@ Healthcare data pipeline using Synthea-generated synthetic patient data, Python,
 | `encounters.csv` | Id, PATIENT, START, STOP, ENCOUNTERCLASS, DESCRIPTION, REASONCODE, REASONDESCRIPTION |
 | `observations.csv` | DATE, PATIENT, ENCOUNTER, CATEGORY, DESCRIPTION, VALUE, UNITS, TYPE |
 
+### Purposeful Inconsistencies
+
+| Inconsistency | DataFrame | Index | What is wrong |
+|---|---|---|---|
+| 1 | patients | 9 | Missing Id |
+| 2 | patients | 108 (last appended row) | Duplicate Id |
+| 3 | encounters | 1 | Missing START |
+| 4 | encounters | 19 | Invalid PATIENT ID |
+| 5 | encounters | 0 | START and STOP switched |
+| 6 | observations | 965 | Invalid ENCOUNTER ID |
+| 7 | observations | 203 | VALUE does not match expected numeric type |
+
+
 ### Data Resource: Synthea
 
 [100 Sample Synthetic Patient Records, CSV](https://synthetichealth.github.io/synthea-sample-data/downloads/latest/synthea_sample_data_csv_latest.zip)
