@@ -1,4 +1,5 @@
 import datetime
+import pandas as pd
 import uuid
 
 SCHEMA_PATIENTS = {
@@ -9,7 +10,7 @@ SCHEMA_PATIENTS = {
     'GENDER': str
 }
 
-GENDER_VALUES = ['M', 'F']
+GENDER_VALUES = ['M', 'F', 'O']
 
 def is_valid_uuid(uuid_to_test, version=2):
     if isinstance(uuid_to_test, float): # NaN values have these datatype
@@ -21,12 +22,11 @@ def is_valid_uuid(uuid_to_test, version=2):
     return True
 
 def is_valid_date(date):
+    if pd.isna(date) is None:
+        return False
     try:
-        new_date = datetime.datetime(date)
-        return True
+        new_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()
     except ValueError:
         return False
+    return True
 
-
-# test_uuid = "f6359fe4-4340-2820-8b76-593a45f5186c"
-# print(is_valid_uuid(test_uuid)
