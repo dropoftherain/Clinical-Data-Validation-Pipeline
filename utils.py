@@ -30,3 +30,13 @@ def is_valid_date(date):
         return False
     return True
 
+def is_valid_datetime(datetime_x):
+    if pd.isna(datetime_x):
+        return False
+    try:
+        datetime.datetime.strptime(str(datetime_x), "%Y-%m-%dT%H:%M:%S%z")
+        return True
+    except ValueError:
+        return False
+
+print(is_valid_datetime("1996-03-32T09:21:33Z"))
