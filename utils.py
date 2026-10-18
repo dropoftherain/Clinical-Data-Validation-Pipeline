@@ -39,4 +39,14 @@ def is_valid_datetime(datetime_x):
     except ValueError:
         return False
 
+def check_datatype(value):
+    try:
+        float(value)
+        return 'numeric'
+    except ValueError:
+        return 'text'
+
 print(is_valid_datetime("1996-03-32T09:21:33Z"))
+print(check_datatype('80'))       # numeric
+print(check_datatype('6.3'))      # numeric
+print(check_datatype('eighty'))   # text

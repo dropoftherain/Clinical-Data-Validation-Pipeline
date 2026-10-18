@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import datetime
 from prepare_data import load
-from utils import is_valid_uuid, is_valid_date, is_valid_datetime
+from utils import is_valid_uuid, is_valid_date, is_valid_datetime, check_datatype
 
 invalidated_patients = []
 
@@ -19,8 +19,9 @@ def make_report(df, df_name, reason_dict):
 
 def validate_patients(dictionary_df):
 
-    # Id cannot be null
     patients = dictionary_df['patients']
+
+    # Id cannot be null
     null_Ids = patients[patients['Id'].isna() | patients['Id'].str.strip().eq('')].index
 
     # Id cannot be duplicated
@@ -127,6 +128,7 @@ def validate_encounters(dictionary_df):
     reason_dict_e = {'Id is NaN': null_Ids,
                 'Id is duplicated': duplicate_Ids,
                 'Id is invalid UUID value': invalid_UUIDs,
+                'PATIENT Id is null': null_patient_Ids,
                 'PATIENT Id references non-existent Id': invalid_patient_Ids,
                 'START datetime is null': null_start_Ids,
                 'START datetime is invalid': invalid_datetime_Ids,
@@ -139,7 +141,65 @@ def validate_encounters(dictionary_df):
     return report_encounters
 
 def validate_observations(dictionary_df):
-    pass
+
+    patients = dictionary_df['patients']
+    encounters = dictionary_df['encounters']
+    observations = dictionary_df['observations']
+
+    # Date cannot be null
+    null_date_observations = observations['DATE'].isna() | observations['DATE'].str.strip().eq('')
+    null_date_Ids = observations[null_date_observations].index
+
+    # Date must be a valid datetime
+    invalid_datetime_observations = observations['DATE'].apply(is_valid_datetime)
+    invalid_datetime_Ids = observations[(invalid_datetime_observations == False) | null_date_observations].index
+
+    # Patient Id cannot be null
+    null_patient_Ids = observations[observations['PATIENT'].isna() | observations['PATIENT'].str.strip().eq('')].index
+
+    # Patient Id cannot reference non-existing Id
+    valid_patient_Ids = list(patients['Id'])
+    invalid_patient_Ids = observations[~observations['PATIENT'].isin(valid_patient_Ids)].index
+
+    # Encounter Id cannot reference non-existing Id
+    null_encounter_Ids = observations['ENCOUNTER'].isna() | observations['ENCOUNTER'].str.strip().eq('') # ALLOWED, just a mask
+    valid_encounter_Ids = list(encounters['Id'])
+    invalid_encounter_Ids = observations[~observations['ENCOUNTER'].isin(valid_encounter_Ids) & ~null_encounter_Ids].index
+
+    # Category cannot be null
+    null_category_Ids = observations[observations['CATEGORY'].isna() | observations['CATEGORY'].str.strip().eq('')].index
+
+    # Category must be in allowed values
+    allowed_categories = ['laboratory', 'survey', 'vital-signs', 'social-history', 'exam', 'imaging', 'procedure', 'therapy']
+    invalid_category_Ids = observations[~observations['CATEGORY'].isin(allowed_categories)].index
+
+    # Value cannot be null
+    value_as_string = observations['VALUE'].astype('string')
+    null_value_observations = observations[observations['VALUE'].isna() | value_as_string.str.strip().eq('').fillna(False)].index
+
+    # Type cannot be null
+    null_type_observations = observations[observations['TYPE'].isna() | observations['TYPE'].str.strip().eq('')].index
+
+    # Type has to correspond to the datatype of value
+    datatypes = observations['VALUE'].apply(check_datatype)
+    not_corr_datatype_Ids = observations[observations['TYPE'] != datatypes].index
+
+    # Collection of results and reasons
+    reason_dict_o = {'DATE is null': null_date_Ids,
+                    'DATE datetime is invalid': invalid_datetime_Ids,
+                    'PATIENT Id is null': null_patient_Ids,
+                    'PATIENT Id references non-existent Id': invalid_patient_Ids,
+                    'ENCOUNTER Id references non-existent Id': invalid_encounter_Ids,
+                    'CATEGORY is null': null_category_Ids,
+                    'CATEGORY is not allowed value': invalid_category_Ids,
+                    'VALUE is null': null_value_observations,
+                    'TYPE is null': null_type_observations,
+                    'TYPE does not correspond to the datatype of VALUE': not_corr_datatype_Ids
+                    }
+    report_observations = make_report(observations, 'observations', reason_dict=reason_dict_o)
+
+    print(report_observations)
+    return report_observations
 
 def main():
     dictionary_df = load('test_data')
@@ -159,7 +219,18 @@ def main():
     ).value_counts()
 
     print(patient_counts)
-    validate_observations(dictionary_df)
+    
+    report_observations = validate_observations(dictionary_df)
+
+    invalid_observations = [
+        record for record in report_observations
+        if record['Reason'] == 'TYPE does not correspond to the datatype of VALUE'
+        ]
+    obs_counts = pd.Series(
+        [record['PATIENT'] for record in invalid_observations]
+    ).value_counts()
+
+    print(obs_counts)
 
 if __name__ == '__main__':
     main()
