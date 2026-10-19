@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import datetime
-from prepare_data import load
+from prepare_data import load, save_data
 from utils import is_valid_uuid, is_valid_date, is_valid_datetime, check_datatype
 
 invalidated_patients = []
@@ -12,6 +12,7 @@ def make_report(df, df_name, reason_dict):
 
     for reason, invalid_Ids in reason_dict.items():  
         invalid_list = [{'DF': df_name,
+                         'Index': i,
                         **{column: df.at[i, column] for column in columns},
                         'Reason': reason} for i in invalid_Ids]
         report.extend(invalid_list)
@@ -206,20 +207,6 @@ def main():
 
     report_patients = validate_patients(dictionary_df)
     report_encounters = validate_encounters(dictionary_df)
-
-    # This is because of inconsistency n.1 that translated even to the encounters because one Id was made NaN,
-    # so its encounters were referencing to a non-existent Id
-    
-    invalid_patient_encounters = [
-        record for record in report_encounters
-        if record['Reason'] == 'PATIENT Id references non-existent Id'
-        ]
-    patient_counts = pd.Series(
-        [record['PATIENT'] for record in invalid_patient_encounters]
-    ).value_counts()
-
-    print(patient_counts)
-    
     report_observations = validate_observations(dictionary_df)
 
     invalid_observations = [
@@ -227,10 +214,23 @@ def main():
         if record['Reason'] == 'TYPE does not correspond to the datatype of VALUE'
         ]
     obs_counts = pd.Series(
-        [record['PATIENT'] for record in invalid_observations]
+        [record['Reason'] for record in report_observations]
     ).value_counts()
 
+    obs_patient_counts = pd.Series(
+            [record['PATIENT'] for record in invalid_observations]
+        ).value_counts()
+
+    print(obs_patient_counts)
     print(obs_counts)
+
+    dictionary_reports = {
+        'patients': pd.DataFrame(report_patients),
+        'encounters': pd.DataFrame(report_encounters),
+        'observations': pd.DataFrame(report_observations)
+    }
+
+    save_data(dictionary_reports, 'reports')
 
 if __name__ == '__main__':
     main()
