@@ -1,10 +1,7 @@
 import pandas as pd
-import numpy as np
 import datetime
 from prepare_data import load, save_data
 from utils import is_valid_uuid, is_valid_date, is_valid_datetime, check_datatype
-
-invalidated_patients = []
 
 def make_report(df, df_name, reason_dict):
     report = []
@@ -76,7 +73,6 @@ def validate_patients(dictionary_df):
                    }
     report_patients = make_report(patients, 'patients', reason_dict=reason_dict)
 
-    print(report_patients)
     return report_patients
 
 def validate_encounters(dictionary_df):
@@ -138,7 +134,6 @@ def validate_encounters(dictionary_df):
                 }
     report_encounters = make_report(encounters, 'encounters', reason_dict=reason_dict_e)
 
-    print(report_encounters)
     return report_encounters
 
 def validate_observations(dictionary_df):
@@ -168,22 +163,26 @@ def validate_observations(dictionary_df):
     invalid_encounter_Ids = observations[~observations['ENCOUNTER'].isin(valid_encounter_Ids) & ~null_encounter_Ids].index
 
     # Category cannot be null
-    null_category_Ids = observations[observations['CATEGORY'].isna() | observations['CATEGORY'].str.strip().eq('')].index
+    null_category_observations = observations['CATEGORY'].isna() | observations['CATEGORY'].str.strip().eq('')
+    null_category_Ids = observations[null_category_observations].index
 
     # Category must be in allowed values
     allowed_categories = ['laboratory', 'survey', 'vital-signs', 'social-history', 'exam', 'imaging', 'procedure', 'therapy']
-    invalid_category_Ids = observations[~observations['CATEGORY'].isin(allowed_categories)].index
+    invalid_category_Ids = observations[~observations['CATEGORY'].isin(allowed_categories) & ~null_category_observations].index
 
     # Value cannot be null
     value_as_string = observations['VALUE'].astype('string')
-    null_value_observations = observations[observations['VALUE'].isna() | value_as_string.str.strip().eq('').fillna(False)].index
+    missing_value_mask = (observations["VALUE"].isna() | value_as_string.str.strip().eq("").fillna(False))
+    null_value_observations = observations[missing_value_mask].index
 
     # Type cannot be null
-    null_type_observations = observations[observations['TYPE'].isna() | observations['TYPE'].str.strip().eq('')].index
+    type_as_string = observations["TYPE"].astype("string")
+    missing_type_mask = (observations["TYPE"].isna()| type_as_string.str.strip().eq("").fillna(False))
+    null_type_observations = observations[missing_type_mask].index
 
     # Type has to correspond to the datatype of value
     datatypes = observations['VALUE'].apply(check_datatype)
-    not_corr_datatype_Ids = observations[observations['TYPE'] != datatypes].index
+    not_corr_datatype_Ids = observations[~missing_value_mask & ~missing_type_mask & observations["TYPE"].ne(datatypes)].index
 
     # Collection of results and reasons
     reason_dict_o = {'DATE is null': null_date_Ids,
@@ -199,30 +198,15 @@ def validate_observations(dictionary_df):
                     }
     report_observations = make_report(observations, 'observations', reason_dict=reason_dict_o)
 
-    print(report_observations)
     return report_observations
 
 def main():
+
     dictionary_df = load('test_data')
 
     report_patients = validate_patients(dictionary_df)
     report_encounters = validate_encounters(dictionary_df)
     report_observations = validate_observations(dictionary_df)
-
-    invalid_observations = [
-        record for record in report_observations
-        if record['Reason'] == 'TYPE does not correspond to the datatype of VALUE'
-        ]
-    obs_counts = pd.Series(
-        [record['Reason'] for record in report_observations]
-    ).value_counts()
-
-    obs_patient_counts = pd.Series(
-            [record['PATIENT'] for record in invalid_observations]
-        ).value_counts()
-
-    print(obs_patient_counts)
-    print(obs_counts)
 
     dictionary_reports = {
         'patients': pd.DataFrame(report_patients),
