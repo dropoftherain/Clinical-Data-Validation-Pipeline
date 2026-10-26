@@ -14,7 +14,7 @@ def is_valid_uuid(uuid_to_test, version=2):
 
 def is_valid_date(date):
     """Validate a date in YYYY-MM-DD format."""
-    if pd.isna(date) is None or date is None:
+    if pd.isna(date) or not isinstance(date, str):
         return False
     try:
         new_date = datetime.datetime.strptime(date, '%Y-%m-%d').date()

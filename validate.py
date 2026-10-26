@@ -20,14 +20,15 @@ def validate_patients(dictionary_df):
     patients = dictionary_df['patients']
 
     # Id cannot be null
-    null_Ids = patients[patients['Id'].isna() | patients['Id'].str.strip().eq('')].index
+    null_Ids_patients = patients['Id'].isna() | patients['Id'].str.strip().eq('')
+    null_Ids = patients[null_Ids_patients].index
 
     # Id cannot be duplicated
     duplicate_Ids = patients[patients['Id'].duplicated() == True].index
 
     # Id must be valid UUID
     invalid_UUIDs_patients = patients['Id'].apply(is_valid_uuid)
-    invalid_UUIDs = patients[invalid_UUIDs_patients == False].index
+    invalid_UUIDs = patients[(invalid_UUIDs_patients == False) & (~null_Ids_patients)].index
 
     # Birthdate cannot be null
     null_birthdate_patients = patients['BIRTHDATE'].isna() | patients['BIRTHDATE'].str.strip().eq('')
@@ -35,7 +36,7 @@ def validate_patients(dictionary_df):
 
     # Birthdate must be a valid date
     invalid_date_patients = patients['BIRTHDATE'].apply(is_valid_date) 
-    invalid_dates_Ids = patients[(invalid_date_patients == False) | (null_birthdate_patients)].index
+    invalid_dates_Ids = patients[(invalid_date_patients == False) & (~null_birthdate_patients)].index
 
     # Birthdate must be before TODAY
     today = datetime.date.today()

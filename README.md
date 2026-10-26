@@ -41,7 +41,7 @@ Jason Walonoski, Mark Kramer, Joseph Nichols, Andre Quina, Chris Moesel, Dylan H
 |---|---|---|---|---|---|---|
 | Validation rule 1 | `Id` cannot be null | patients | Yes | 1 | 1 (index 9) | Expected — intentional. Missing `Id` at index 9. |
 | Validation rule 2 | `Id` cannot be duplicated | patients | Yes | 2 | 1 (index 108; duplicate of an existing ID) | Expected — intentional. Duplicate `Id` at index 108. |
-| Validation rule 3 | `Id` must be a valid UUID | patients | Yes | 1 | 1 (index 9) | Expected — intentional. The missing `Id` at index 9 is also considered invalid. |
+| Validation rule 3 | `Id` must be a valid UUID | patients | - | - | - | No findings reported. |
 | Validation rule 4 | `BIRTHDATE` cannot be null | patients | - | - | - | No findings reported. |
 | Validation rule 5 | `BIRTHDATE` must be a valid date | patients | - | - | - | No findings reported. |
 | Validation rule 6 | `BIRTHDATE` must not be in the future | patients | - | - | - | No findings reported. |
