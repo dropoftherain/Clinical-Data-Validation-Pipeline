@@ -60,7 +60,7 @@ Jason Walonoski, Mark Kramer, Joseph Nichols, Andre Quina, Chris Moesel, Dylan H
 | Validation rule 14 | `PATIENT` cannot be null | encounters | - | - | - | No findings reported. |
 | Validation rule 15 | `PATIENT` must reference an existing patient | encounters | Yes | 1, 4 | 37 records | Explained — 36 downstream failures caused by inconsistency 1, where patient Id was removed from `patients`, plus 1 intentional inconsistency 4 at index 19. |
 | Validation rule 16 | `START` cannot be null | encounters | Yes | 3 | 1 (index 1) | Expected — intentional. Missing `START` at index 1. |
-| Validation rule 17 | `START` must be a valid datetime | encounters | Yes | 3 | 1 (index 1) | Expected — intentional. The missing `START` at index 1 also violates this rule. |
+| Validation rule 17 | `START` must be a valid datetime | encounters | - | - | - | No findings reported. |
 | Validation rule 18 | `STOP`, if present, must be a valid datetime | encounters | - | - | - | No findings reported. |
 | Validation rule 19 | `STOP` must not be before `START` | encounters | Yes | 5 | 1 (index 0) | Expected — intentional. `START` and `STOP` were switched at index 0. |
 
