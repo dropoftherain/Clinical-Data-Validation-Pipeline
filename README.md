@@ -31,6 +31,24 @@ Jason Walonoski, Mark Kramer, Joseph Nichols, Andre Quina, Chris Moesel, Dylan H
 | 6 | observations | 965 | Invalid ENCOUNTER ID |
 | 7 | observations | 203 | VALUE does not match expected numeric type |
 
+### Cross-table Validation
+
+In addition to individual column-level validation, the pipeline performs cross-table validation to ensure referential integrity between the three datasets.
+
+The validation process follows this order:
+
+1. **Patients** – patient records are validated first. Records containing validation errors are excluded from the validated dataset.
+2. **Encounters** – encounter records are checked against the original patients dataset and the validated patients dataset. This identifies:
+   - References to non-existent patients.
+   - References to patients that exist in the original dataset but failed validation.
+3. **Observations** – observation records are checked against both the original and validated patients and encounters datasets. This identifies:
+   - References to non-existent patients or encounters.
+   - References to patients or encounters that failed validation.
+
+Records with cross-table validation errors are included in the validation report and excluded from the final validated dataset.
+
+This approach helps ensure that the resulting datasets maintain referential integrity before being loaded into the database.
+
 ### File Repository
 
 ## Results
@@ -63,20 +81,25 @@ Jason Walonoski, Mark Kramer, Joseph Nichols, Andre Quina, Chris Moesel, Dylan H
 | Validation rule 17 | `START` must be a valid datetime | encounters | - | - | - | No findings reported. |
 | Validation rule 18 | `STOP`, if present, must be a valid datetime | encounters | - | - | - | No findings reported. |
 | Validation rule 19 | `STOP` must not be before `START` | encounters | Yes | 5 | 1 (index 0) | Expected — intentional. `START` and `STOP` were switched at index 0. |
+| Validation rule 20 | `PATIENT` must reference a patient that passed validation | encounters | - | - | - | To be determined — identifies references to patients that exist in the original dataset but failed patient validation. |
 
 ### Observations Report
 
 | Validation rule number | Validation rule | DataFrame | Inconsistency detected? | Inconsistency number | Affected rows | Investigation status |
 |---|---|---|---|---|---|---|
-| Validation rule 20 | `DATE` cannot be null | observations | - | - | - | No findings reported. |
-| Validation rule 21 | `DATE` must be a valid datetime | observations | - | - | - | No findings reported. |
-| Validation rule 22 | `PATIENT` cannot be null | observations | - | - | - | No findings reported. |
-| Validation rule 23 | `PATIENT` must reference an existing patient | observations | Yes | 1 | 397 records | Explained — downstream effect of the patient ID removed from `patients`. These records reference a patient ID that no longer exists in the parent table. |
-| Validation rule 24 | `ENCOUNTER`, if present, must reference an existing encounter | observations | Yes | 6 | 1 (index 965) | Expected — intentional. Invalid `ENCOUNTER` ID at index 965. |
-| Validation rule 25 | `CATEGORY` cannot be null | observations | Yes | External | 3,060 unique records | Observed — records associated with QALY, DALY, QOLS, or similar measures have missing categories. Requires confirmation against source data expectations. |
-| Validation rule 26 | `CATEGORY` must belong to the allowed set | observations | - | - | - | No findings reported. |
-| Validation rule 27 | `VALUE` cannot be null | observations | - | - | - | No findings reported. |
-| Validation rule 28 | `TYPE` cannot be null | observations | - | - | - | No findings reported. |
-| Validation rule 29 | `TYPE` must correspond to the datatype of `VALUE` | observations | Yes | 7, External | 1 intentional record (index 203); 1,001 additional records requiring investigation | Expected — intentional mismatch at index 203 (`VALUE = 'eighty'`, `TYPE = 'numeric'`). The other 1,001 mismatches are not explained by the intentional inconsistencies. Their values appear numeric, and they should describe numerical observations. |
+| Validation rule 21 | `DATE` cannot be null | observations | - | - | - | No findings reported. |
+| Validation rule 22 | `DATE` must be a valid datetime | observations | - | - | - | No findings reported. |
+| Validation rule 23 | `PATIENT` cannot be null | observations | - | - | - | No findings reported. |
+| Validation rule 24 | `PATIENT` must reference an existing patient | observations | Yes | 1 | 397 records | Explained — downstream effect of the patient ID removed from `patients`. These records reference a patient ID that no longer exists in the parent table. |
+| Validation rule 25 | `ENCOUNTER`, if present, must reference an existing encounter | observations | Yes | 6 | 1 (index 965) | Expected — intentional. Invalid `ENCOUNTER` ID at index 965. |
+| Validation rule 26 | `CATEGORY` cannot be null | observations | Yes | External | 3,060 unique records | Observed — records associated with QALY, DALY, QOLS, or similar measures have missing categories. Requires confirmation against source data expectations. |
+| Validation rule 27 | `CATEGORY` must belong to the allowed set | observations | - | - | - | No findings reported. |
+| Validation rule 28 | `VALUE` cannot be null | observations | - | - | - | No findings reported. |
+| Validation rule 29 | `TYPE` cannot be null | observations | - | - | - | No findings reported. |
+| Validation rule 30 | `TYPE` must correspond to the datatype of `VALUE` | observations | Yes | 7, External | 1 intentional record (index 203); 1,001 additional records requiring investigation | Expected — intentional mismatch at index 203 (`VALUE = 'eighty'`, `TYPE = 'numeric'`). The other 1,001 mismatches are not explained by the intentional inconsistencies. Their values appear numeric, and they should describe numerical observations. |
+| Validation rule 31 | `PATIENT` must reference a patient that passed validation | observations | - | - | - | To be determined — identifies references to patients that exist in the original dataset but failed patient validation. |
+| Validation rule 32 | `ENCOUNTER`, if present, must reference an encounter that passed validation | observations | Yes | 1, 4 | 390 | Explained — downstream effect of the patient ID removed from `patients`. Such patients' encounters were invalidated in encounters report, thus invalidated in the observations table. |
+
+
 
 
