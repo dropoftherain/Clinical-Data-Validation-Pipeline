@@ -68,14 +68,14 @@ def errors_for(report, index, reason):
     ]
 
 def test_valid_patient_is_not_in_report(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
     patients_data_df = patients_data['patients']
     valid_Id = patients_data_df.iloc[0]['Id']
 
     assert len([item for item in report if item['Id'] == valid_Id]) == 0
 
 def test_null_id_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 1, "Id is NaN")
 
@@ -83,7 +83,7 @@ def test_null_id_is_reported(patients_data):
 
 
 def test_duplicate_id_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 11, "Id is duplicated")
 
@@ -91,7 +91,7 @@ def test_duplicate_id_is_reported(patients_data):
 
 
 def test_invalid_uuid_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 3, "Id is invalid UUID value")
 
@@ -99,7 +99,7 @@ def test_invalid_uuid_is_reported(patients_data):
 
 
 def test_duplicate_id_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 11, "Id is duplicated")
 
@@ -107,7 +107,7 @@ def test_duplicate_id_is_reported(patients_data):
 
 
 def test_null_first_name_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 5, "FIRST name is null")
 
@@ -115,7 +115,7 @@ def test_null_first_name_is_reported(patients_data):
 
 
 def test_blank_first_name_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 12, "FIRST name is null")
 
@@ -123,7 +123,7 @@ def test_blank_first_name_is_reported(patients_data):
 
 
 def test_null_last_name_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 6, "LAST name is null")
 
@@ -131,7 +131,7 @@ def test_null_last_name_is_reported(patients_data):
 
 
 def test_blank_last_name_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 13, "LAST name is null")
 
@@ -139,7 +139,7 @@ def test_blank_last_name_is_reported(patients_data):
 
 
 def test_null_gender_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 7, "GENDER is null")
 
@@ -147,21 +147,21 @@ def test_null_gender_is_reported(patients_data):
 
 
 def test_invalid_gender_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 8, "GENDER not in allowed values")
 
     assert len(errors) == 1
 
 def test_future_birthdate_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
     
     errors = errors_for(report, 4, "BIRTHDATE is after today")
     
     assert len(errors) == 1
 
 def test_invalid_birthdate_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
 
     errors = errors_for(report, 10, "BIRTHDATE is invalid")
 
@@ -169,7 +169,7 @@ def test_invalid_birthdate_is_reported(patients_data):
 
 
 def test_null_birthdate_is_reported(patients_data):
-    report = validate_patients(patients_data)
+    report, _ = validate_patients(patients_data)
     
     errors = errors_for(report, 9, "BIRTHDATE is null")
     

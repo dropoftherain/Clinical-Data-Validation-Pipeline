@@ -18,7 +18,9 @@ def encounters_data():
                 "66666666-6666-4666-8666-666666666666",  # 6: invalid START
                 "77777777-7777-4777-8777-777777777777",  # 7: missing PATIENT, missing STOP
                 None,                                    # 8: null Id 
+                "88888888-8888-4888-8888-888888888888",  # 9: Patient Id not in validated patients
             ],
+
             "PATIENT": [
                 "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
                 "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -29,6 +31,7 @@ def encounters_data():
                 "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
                 None,
                 "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                "cccccccc-cccc-4ccc-8ccc-cccccccccccc"  # Assuming that it is not present in validated patients
             ],
             "START": [
                 "2024-01-10T10:00:00Z",
@@ -40,6 +43,7 @@ def encounters_data():
                 "not-a-datetime",
                 "2024-07-10T10:00:00Z",
                 "2024-08-10T10:00:00Z",
+                "2024-09-10T10:00:00Z",
             ],
             "STOP": [
                 "2024-01-10T11:00:00Z",
@@ -51,6 +55,7 @@ def encounters_data():
                 "2024-06-10T11:00:00Z",
                 "not-a-datetime",
                 "2024-08-10T12:00:00Z",
+                "2024-09-10T12:00:00Z",
             ],
             "ENCOUNTERCLASS": [
                 "ambulatory",
@@ -62,6 +67,7 @@ def encounters_data():
                 "outpatient",
                 "wellness",
                 "ambulatory",
+                "ambulatory",
             ],
             "DESCRIPTION": [
                 "Valid encounter",
@@ -72,13 +78,14 @@ def encounters_data():
                 "Duplicate ID",
                 "Invalid start",
                 "Missing patient and missing stop",
-                "Null Id"
+                "Null Id",
+                "References a PATIENT which was not validated"
             ],
             "REASONCODE": [
-                None, None, None, None, None, None, None, None, None
+                None, None, None, None, None, None, None, None, None, None
             ],
             "REASONDESCRIPTION": [
-                None, None, None, None, None, None, None, None, None
+                None, None, None, None, None, None, None, None, None, None
             ],
         }
     )
@@ -86,14 +93,25 @@ def encounters_data():
     patients = pd.DataFrame(
         {
             "Id": [
-                "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+                "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
             ]
+        }
+    )
+
+    validated_patients = pd.DataFrame(
+        {
+            "Id": [
+                            "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                            "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"    
+                        ],
         }
     )
 
     return {
         "patients": patients,
         "encounters": encounters,
+        "validated_patients": validated_patients
     }
 
 
@@ -105,7 +123,7 @@ def errors_for(report, index, reason):
 
 
 def test_valid_encounter_is_not_in_report(encounters_data):
-    report = validate_encounters(encounters_data)
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
 
     errors = [
         item for item in report
@@ -116,7 +134,7 @@ def test_valid_encounter_is_not_in_report(encounters_data):
 
 
 def test_invalid_uuid_is_reported(encounters_data):
-    report = validate_encounters(encounters_data)
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
 
     errors = errors_for(
         report, 4, "Id is invalid UUID value"
@@ -125,7 +143,7 @@ def test_invalid_uuid_is_reported(encounters_data):
     assert len(errors) == 1
 
 def test_null_id_is_reported(encounters_data):
-    report = validate_encounters(encounters_data)
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
 
     errors = errors_for(
         report, 8, "Id is NaN"
@@ -135,7 +153,7 @@ def test_null_id_is_reported(encounters_data):
 
 
 def test_duplicate_id_is_reported(encounters_data):
-    report = validate_encounters(encounters_data)
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
 
     errors = errors_for(
         report, 5, "Id is duplicated"
@@ -145,7 +163,7 @@ def test_duplicate_id_is_reported(encounters_data):
 
 
 def test_nonexistent_patient_is_reported(encounters_data):
-    report = validate_encounters(encounters_data)
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
 
     errors = errors_for(
         report, 2, "PATIENT Id references non-existent Id"
@@ -155,7 +173,7 @@ def test_nonexistent_patient_is_reported(encounters_data):
 
 
 def test_null_patient_is_reported(encounters_data):
-    report = validate_encounters(encounters_data)
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
 
     errors = errors_for(
         report, 7, "PATIENT Id is null"
@@ -164,7 +182,7 @@ def test_null_patient_is_reported(encounters_data):
     assert len(errors) == 1
 
 def test_null_start_is_reported(encounters_data):
-    report = validate_encounters(encounters_data)
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
 
     errors = errors_for(
         report, 1, "START datetime is null"
@@ -174,7 +192,7 @@ def test_null_start_is_reported(encounters_data):
 
 
 def test_invalid_start_datetime_is_reported(encounters_data):
-    report = validate_encounters(encounters_data)
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
 
     errors = errors_for(
         report, 6, "START datetime is invalid"
@@ -183,7 +201,7 @@ def test_invalid_start_datetime_is_reported(encounters_data):
     assert len(errors) == 1
 
 def test_invalid_stop_datetime_is_reported(encounters_data):
-    report = validate_encounters(encounters_data)
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
 
     errors = errors_for(
         report, 7, "STOP datetime is invalid"
@@ -193,10 +211,30 @@ def test_invalid_stop_datetime_is_reported(encounters_data):
 
 
 def test_start_after_stop_is_reported(encounters_data):
-    report = validate_encounters(encounters_data)
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
 
     errors = errors_for(
         report, 3, "STOP datetime is before START datetime"
     )
 
     assert len(errors) == 1
+
+def test_validated_patient_not_reported(encounters_data):
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
+
+    errors = [
+        item for item in report
+        if item["Index"] == 0
+    ]
+
+    assert len(errors) == 0
+
+def test_invalidated_patient_reported(encounters_data):
+    report, _ = validate_encounters(encounters_data, encounters_data["validated_patients"])
+    
+    errors = errors_for(
+            report, 9, "References a PATIENT which was not validated"
+        )
+
+    assert len(errors) == 1
+
