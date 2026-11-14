@@ -310,3 +310,25 @@ def test_validated_patient_and_encounter_are_not_reported(observations_data):
     ]
 
     assert len(errors) == 0
+
+
+def test_nonvalidated_references_are_filtered_out(observations_data):
+    _, observations_validated = validate_observations(
+        observations_data,
+        observations_data["validated_patients"],
+        observations_data["validated_encounters"]
+    )
+
+    assert 11 not in observations_validated.index
+    assert 12 not in observations_validated.index
+    assert 13 not in observations_validated.index
+
+
+def test_valid_observation_remains_in_validated_data(observations_data):
+    _, observations_validated = validate_observations(
+        observations_data,
+        observations_data["validated_patients"],
+        observations_data["validated_encounters"]
+    )
+
+    assert 0 in observations_validated.index

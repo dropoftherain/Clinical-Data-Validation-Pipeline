@@ -238,3 +238,20 @@ def test_invalidated_patient_reported(encounters_data):
 
     assert len(errors) == 1
 
+
+def test_nonvalidated_patient_references_are_filtered_out(encounters_data):
+    _, encounters_validated = validate_encounters(
+        encounters_data,
+        encounters_data["validated_patients"]
+    )
+
+    assert 9 not in encounters_validated.index
+
+
+def test_valid_encounter_remains_in_validated_data(encounters_data):
+    _, encounters_validated = validate_encounters(
+        encounters_data,
+        encounters_data["validated_patients"]
+    )
+
+    assert 0 in encounters_validated.index
