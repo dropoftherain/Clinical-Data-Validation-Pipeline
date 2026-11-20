@@ -10,13 +10,13 @@ Healthcare data pipeline using Synthea-generated synthetic patient data, Python,
 
 ```mermaid
 flowchart LR
-    A["raw_data/<br/>full Synthea CSVs"] --> B["prepare_data.py<br/>column selection"]
-    B --> C["clean_data/<br/>selected columns"]
+    A["data/raw/<br/>full Synthea CSVs"] --> B["prepare_data.py<br/>column selection"]
+    B --> C["data/clean/<br/>selected columns"]
     C --> D["prepare_data.py<br/>inject 7 intentional faults"]
-    D --> E["test_data/<br/>faulty CSVs"]
+    D --> E["data/test/<br/>faulty CSVs"]
     E --> F["validate.py<br/>patients → encounters → observations"]
-    F --> G["reports/<br/>failed rows + reasons"]
-    F --> H["validated_data/<br/>rows that passed"]
+    F --> G["data/reports/<br/>failed rows + reasons"]
+    F --> H["data/validated/<br/>rows that passed"]
     H --> I["send_to_database.py<br/>PostgreSQL"]
 ```
 
@@ -25,14 +25,14 @@ flowchart LR
 ```mermaid
 flowchart TD
     P["1. validate_patients"] --> PV["patients_validated"]
-    P --> PR["reports/patients.csv"]
+    P --> PR["data/reports/patients.csv"]
     PV --> E["2. validate_encounters"]
     E --> EV["encounters_validated"]
-    E --> ER["reports/encounters.csv"]
+    E --> ER["data/reports/encounters.csv"]
     PV --> O["3. validate_observations"]
     EV --> O
     O --> OV["observations_validated"]
-    O --> OR["reports/observations.csv"]
+    O --> OR["data/reports/observations.csv"]
 ```
 
 ---
@@ -47,7 +47,7 @@ Jason Walonoski, Mark Kramer, Joseph Nichols, Andre Quina, Chris Moesel, Dylan H
 
 ### Original data (selected columns)
 
-From the full Synthea exports in `raw_data/`, only the columns below are kept in `clean_data/` / `test_data/`:
+From the full Synthea exports in `data/raw/`, only the columns below are kept in `data/clean/` / `data/test/`:
 
 | File | Columns |
 | --- | --- |
@@ -57,7 +57,7 @@ From the full Synthea exports in `raw_data/`, only the columns below are kept in
 
 ### Purposeful inconsistencies
 
-Seven intentional faults are injected by `prepare_data.py` into `test_data/` so validation rules can be demonstrated and tested:
+Seven intentional faults are injected by `prepare_data.py` into `data/test/` so validation rules can be demonstrated and tested:
 
 | Inconsistency | DataFrame | Index | What is wrong |
 |---|---|---|---|
@@ -170,7 +170,7 @@ erDiagram
 
 ### Report CSV schema
 
-Each file under `reports/` contains every failing row (one row per failure reason; the same source row may appear more than once if it fails multiple rules), plus:
+Each file under `data/reports/` contains every failing row (one row per failure reason; the same source row may appear more than once if it fails multiple rules), plus:
 
 | Extra column | Meaning |
 | --- | --- |
@@ -196,16 +196,16 @@ CSV ↔ DB name mapping: `Id` → `patient_id` / `encounter_id`, `FIRST` → `fi
 
 | Path | Role |
 | --- | --- |
-| `raw_data/` | Original Synthea sample CSVs (full column set) |
-| `clean_data/` | Same records with only the selected clinical columns |
-| `test_data/` | Clean data plus the 7 intentional inconsistencies |
-| `validated_data/` | Rows that passed all validation rules |
-| `reports/` | Failed rows with `Reason` explanations |
-| `prepare_data.py` | Load raw → select columns → inject faults → write `clean_data/` and `test_data/` |
-| `validate.py` | Run patient / encounter / observation validation; write reports and validated CSVs |
+| `data/raw/` | Original Synthea sample CSVs (full column set) |
+| `data/clean/` | Same records with only the selected clinical columns |
+| `data/test/` | Clean data plus the 7 intentional inconsistencies |
+| `data/validated/` | Rows that passed all validation rules |
+| `data/reports/` | Failed rows with `Reason` explanations |
+| `prepare_data.py` | Load raw → select columns → inject faults → write `data/clean/` and `data/test/` |
+| `validate.py` | Run patient / encounter / observation validation; write `data/reports/` and `data/validated/` |
 | `utils.py` | UUID, date/datetime, and datatype helpers |
 | `reporting_utils.py` | Build reports, collect error indices, filter validated rows |
-| `send_to_database.py` | Create PostgreSQL tables and insert `validated_data/` |
+| `send_to_database.py` | Create PostgreSQL tables and insert `data/validated/` |
 | `tests/` | pytest coverage for preparation, validation, utils, and reporting |
 | `adjust_data.ipynb` | Exploratory notebook for inspecting / adjusting data |
 | `investigate_results.ipynb` | Notebook for reviewing validation outcomes |
@@ -214,10 +214,10 @@ Approximate row counts in the current sample run:
 
 | Stage | patients | encounters | observations |
 | --- | ---: | ---: | ---: |
-| `clean_data` | 108 | 5,571 | 68,648 |
-| `test_data` | 109 (+1 duplicate) | 5,571 | 68,648 |
-| `validated_data` | 107 | 5,532 | 64,203 |
-| `reports` (failure rows) | 2 | 39 | 4,850 |
+| `data/clean` | 108 | 5,571 | 68,648 |
+| `data/test` | 109 (+1 duplicate) | 5,571 | 68,648 |
+| `data/validated` | 107 | 5,532 | 64,203 |
+| `data/reports` (failure rows) | 2 | 39 | 4,850 |
 
 ---
 
@@ -235,13 +235,13 @@ Approximate row counts in the current sample run:
 # Install dependencies
 pip install -r requirements.txt
 
-# 1) Build clean_data/ and test_data/ from raw_data/
+# 1) Build data/clean/ and data/test/ from data/raw/
 python prepare_data.py
 
-# 2) Validate test_data/ → write reports/ and validated_data/
+# 2) Validate data/test/ → write data/reports/ and data/validated/
 python validate.py
 
-# 3) (Optional) Load validated_data/ into PostgreSQL
+# 3) (Optional) Load data/validated/ into PostgreSQL
 export DB_PASSWORD='your_password'
 python send_to_database.py
 

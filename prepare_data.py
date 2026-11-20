@@ -8,6 +8,13 @@ dictionary = {
     'observations': ['DATE', 'PATIENT', 'ENCOUNTER', 'CATEGORY', 'DESCRIPTION', 'VALUE', 'UNITS', 'TYPE'],
 }
 
+# Pipeline stage folders under data/
+RAW_DIR = os.path.join('data', 'raw')
+CLEAN_DIR = os.path.join('data', 'clean')
+TEST_DIR = os.path.join('data', 'test')
+VALIDATED_DIR = os.path.join('data', 'validated')
+REPORTS_DIR = os.path.join('data', 'reports')
+
 def load(step_in_the_process: str):
     """Load patients, encounters, and observations CSVs from a pipeline folder."""
     dictionary_df = {}
@@ -78,12 +85,12 @@ def purposeful_inconsistencies(dictionary_df):
     return dictionary_df
 
 def main():
-    """Build clean_data/ from raw_data/, then write test_data/ with intentional faults."""
-    dictionary_df = load('raw_data')
+    """Build data/clean/ from data/raw/, then write data/test/ with intentional faults."""
+    dictionary_df = load(RAW_DIR)
     dictionary_df_c = choose_columns(dictionary, dictionary_df)
     print('Selected columns of patients dataframe: ', dictionary_df_c['patients'].columns.tolist())
 
-    save_data(dictionary_df_c, 'clean_data')
+    save_data(dictionary_df_c, CLEAN_DIR)
 
     # Create independent copies for testing
     dictionary_df_t = {
@@ -109,7 +116,7 @@ def main():
     print('Observation with invalid ENCOUNTER: ', dictionary_df_t['observations'].iloc[965]) # Inconsistency n.6
     print('Observation with not corresponding VALUE/TYPE: ', dictionary_df_t['observations'].iloc[203]) # Inconsistency n.7
 
-    save_data(dictionary_df_t, 'test_data')
+    save_data(dictionary_df_t, TEST_DIR)
 
 if __name__ == '__main__':
     main()

@@ -1,6 +1,6 @@
 import pandas as pd
 import datetime
-from prepare_data import load, save_data
+from prepare_data import load, save_data, TEST_DIR, REPORTS_DIR, VALIDATED_DIR
 from utils import is_valid_uuid, is_valid_date, is_valid_datetime, check_datatype
 from reporting_utils import make_report, make_dictionary, collect_error_indices, filter_validated_data
 
@@ -270,18 +270,18 @@ def validate_observations(dictionary_df, patients_validated, encounters_validate
     return report_observations, observations_validated
 
 def main():
-    """Run full validation on test_data/ and write reports/ plus validated_data/."""
-    dictionary_df = load('test_data')
+    """Run full validation on data/test/ and write data/reports/ plus data/validated/."""
+    dictionary_df = load(TEST_DIR)
 
     report_patients, patients_validated = validate_patients(dictionary_df)
     report_encounters, encounters_validated = validate_encounters(dictionary_df, patients_validated)
     report_observations, observations_validated = validate_observations(dictionary_df, patients_validated, encounters_validated)
 
     dictionary_reports = make_dictionary(report_patients, report_encounters, report_observations)
-    save_data(dictionary_reports, 'reports')
+    save_data(dictionary_reports, REPORTS_DIR)
 
     validated = make_dictionary(patients_validated, encounters_validated, observations_validated)
-    save_data(validated, 'validated_data')
+    save_data(validated, VALIDATED_DIR)
 
 if __name__ == '__main__':
     main()

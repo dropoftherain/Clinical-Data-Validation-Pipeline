@@ -2,7 +2,7 @@ import psycopg2
 import os
 import pandas as pd
 import numpy as np
-from prepare_data import load
+from prepare_data import load, VALIDATED_DIR
 
 sql_create_patients = '''CREATE TABLE patients(id SERIAL PRIMARY KEY,
                                 patient_id UUID NOT NULL UNIQUE,
@@ -76,8 +76,8 @@ def insert_data(sql_insert, cursor, df, index_switch: bool):
         cursor.execute(sql_insert, arr if index_switch == False else arr[idx])
 
 def main():
-    """Load validated_data/ into the local PostgreSQL clinical_data database."""
-    data = load("validated_data")
+    """Load data/validated/ into the local PostgreSQL clinical_data database."""
+    data = load(VALIDATED_DIR)
 
     patients = data['patients']
     encounters = data['encounters']

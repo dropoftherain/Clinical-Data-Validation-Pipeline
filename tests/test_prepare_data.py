@@ -4,12 +4,15 @@ import pytest
 from prepare_data import (
     load,
     choose_columns,
-    purposeful_inconsistencies
+    purposeful_inconsistencies,
+    RAW_DIR,
+    CLEAN_DIR,
+    TEST_DIR,
 )
 
 @pytest.mark.parametrize(
     "step",
-    ["raw_data", "clean_data", "test_data"],
+    [RAW_DIR, CLEAN_DIR, TEST_DIR],
 )
 def test_load_existing_data(step):
     result = load(step)
