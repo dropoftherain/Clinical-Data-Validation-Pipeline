@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 
@@ -8,6 +9,7 @@ dictionary = {
 }
 
 def load(step_in_the_process: str):
+    """Load patients, encounters, and observations CSVs from a pipeline folder."""
     dictionary_df = {}
     for file in ['patients', 'encounters', 'observations']:
         df = pd.read_csv(f'{step_in_the_process}/{file}.csv')
@@ -16,16 +18,20 @@ def load(step_in_the_process: str):
     return dictionary_df
 
 def choose_columns(dictionary, dictionary_df):
+    """Keep only the configured columns for each dataframe."""
     for df_name, columns in dictionary.items():
         dictionary_df[df_name] = dictionary_df[df_name][columns]
 
     return dictionary_df
 
 def save_data(dictionary_df, step_in_the_process: str):
+    """Write each dataframe as a CSV into the given folder (created if missing)."""
+    os.makedirs(step_in_the_process, exist_ok=True)
     for df_name, df in dictionary_df.items():
         df.to_csv(f'{step_in_the_process}/{df_name}.csv', index=False)
 
 def purposeful_inconsistencies(dictionary_df):
+    """Inject the seven intentional data-quality faults used for validation testing."""
     for df_name, df in dictionary_df.items():
         if df_name == 'patients':
 
@@ -72,6 +78,7 @@ def purposeful_inconsistencies(dictionary_df):
     return dictionary_df
 
 def main():
+    """Build clean_data/ from raw_data/, then write test_data/ with intentional faults."""
     dictionary_df = load('raw_data')
     dictionary_df_c = choose_columns(dictionary, dictionary_df)
     print('Selected columns of patients dataframe: ', dictionary_df_c['patients'].columns.tolist())

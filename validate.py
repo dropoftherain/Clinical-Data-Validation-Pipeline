@@ -5,7 +5,7 @@ from utils import is_valid_uuid, is_valid_date, is_valid_datetime, check_datatyp
 from reporting_utils import make_report, make_dictionary, collect_error_indices, filter_validated_data
 
 def validate_patients(dictionary_df):
-
+    """Validate patient rows; return (failure report, rows that passed)."""
     patients = dictionary_df['patients']
 
     # Id cannot be null
@@ -82,7 +82,7 @@ def validate_patients(dictionary_df):
     return report_patients, patients_validated
 
 def validate_encounters(dictionary_df, patients_validated):
-
+    """Validate encounters, including FK checks against original and validated patients."""
     encounters = dictionary_df['encounters']
     patients = dictionary_df['patients']
     
@@ -169,7 +169,7 @@ def validate_encounters(dictionary_df, patients_validated):
     return report_encounters, encounters_validated
 
 def validate_observations(dictionary_df, patients_validated, encounters_validated):
-
+    """Validate observations, including FK checks against patients and encounters."""
     patients = dictionary_df['patients']
     encounters = dictionary_df['encounters']
     observations = dictionary_df['observations']
@@ -270,7 +270,7 @@ def validate_observations(dictionary_df, patients_validated, encounters_validate
     return report_observations, observations_validated
 
 def main():
-
+    """Run full validation on test_data/ and write reports/ plus validated_data/."""
     dictionary_df = load('test_data')
 
     report_patients, patients_validated = validate_patients(dictionary_df)
